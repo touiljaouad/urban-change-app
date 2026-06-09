@@ -6,3 +6,5 @@ numpy
 opencv-python-headless
 Pillow
 matplotlib
+fpdf2
+piexif
