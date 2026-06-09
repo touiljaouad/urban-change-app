@@ -13,7 +13,6 @@ import io
 import re
 
 # --- 1. GLOBAL SETTINGS & FIXING TEXT COLORS ---
-# Force Matplotlib to use light text for dark mode
 plt.rcParams.update({
     'text.color': '#F8FAFC',
     'axes.labelcolor': '#F8FAFC',
@@ -24,20 +23,16 @@ plt.rcParams.update({
     'ytick.color': '#F8FAFC'
 })
 
-# Custom CSS to force white text everywhere and style the UI
 st.markdown("""
 <style>
-    /* Hide default Streamlit footer and menu */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
-    /* Force white text for labels and metrics */
     label, p, div[data-testid="stMetricLabel"], div[data-testid="stMetricValue"], h1, h2, h3, h4 {
         color: #F8FAFC !important;
     }
     
-    /* Style the main button */
     div.stButton > button {
         background-color: #10B981;
         color: white !important;
@@ -51,17 +46,19 @@ st.markdown("""
         background-color: #059669;
     }
 
-    /* Style the sidebar */
-    section[data-testid="stSidebar"] {
-        background-color: #1E293B;
-        border-right: 1px solid #334155;
-    }
-    
-    /* Style file uploaders */
     div[data-testid="stFileUploader"] {
         border: 1px dashed #475569;
         border-radius: 8px;
         padding: 10px;
+    }
+    
+    /* Style the upload containers */
+    .upload-container {
+        background-color: #1E293B;
+        padding: 20px;
+        border-radius: 10px;
+        border: 1px solid #334155;
+        margin-bottom: 20px;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -84,21 +81,17 @@ def load_model():
 model = load_model()
 
 # --- 3. HELPER FUNCTIONS ---
-
-# Auto-detect year from EXIF or Filename
 def get_year_from_file(file):
     if file is None: return None
     try:
-        # 1. Try EXIF metadata
         img = Image.open(file)
         exif = img._getexif()
-        if exif and 36867 in exif: # DateTimeOriginal
+        if exif and 36867 in exif:
             date_str = exif[36867]
             year = int(date_str.split(':')[0])
             if 1900 < year < 2100: return year
     except: pass
 
-    # 2. Try finding a year in the filename (e.g., "satellite_2015.png")
     match = re.search(r'(19|20)\d{2}', file.name)
     if match: return int(match.group(0))
     
@@ -122,9 +115,9 @@ def calc_stats(m1, m2, y1, y2):
     px_km2 = (PIXEL_RESOLUTION**2) / 1e6
     u1, u2 = m1.sum() * px_km2, m2.sum() * px_km2
     cm = np.zeros_like(m1, dtype=np.uint8)
-    cm[(m1==0)&(m2==1)] = 1 # Expansion
-    cm[(m1==1)&(m2==0)] = 2 # Loss
-    cm[(m1==1)&(m2==1)] = 3 # Stable
+    cm[(m1==0)&(m2==1)] = 1
+    cm[(m1==1)&(m2==0)] = 2
+    cm[(m1==1)&(m2==1)] = 3
     new = (cm==1).sum() * px_km2
     loss = (cm==2).sum() * px_km2
     net = u2 - u1
@@ -132,13 +125,12 @@ def calc_stats(m1, m2, y1, y2):
     gr = (net/u1*100) if u1 > 0 else 0
     return cm, u1, u2, new, loss, net, gr, yrs
 
-# PDF Generator
 def create_pdf_report(stats, change_map_img):
     pdf = FPDF()
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.set_text_color(248, 250, 252) # White text
-    pdf.set_fill_color(15, 23, 42)    # Dark background
+    pdf.set_text_color(248, 250, 252)
+    pdf.set_fill_color(15, 23, 42)
     pdf.cell(0, 15, "Urban Change Detection Report", ln=True, align="C", fill=True)
     pdf.ln(10)
     
@@ -158,7 +150,6 @@ def create_pdf_report(stats, change_map_img):
     
     pdf.set_font("Helvetica", "B", 12)
     pdf.cell(0, 10, "Change Map:", ln=True)
-    # Save image temporarily to add to PDF
     temp_path = "temp_map.png"
     change_map_img.save(temp_path)
     pdf.image(temp_path, x=10, w=190)
@@ -166,40 +157,41 @@ def create_pdf_report(stats, change_map_img):
     return pdf.output()
 
 # --- 4. UI LAYOUT ---
-st.markdown("<h1 style='text-align: center; color: #10B981;'>🏙️ Urban Change Detection</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #10B981;'>️ Urban Change Detection</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis</p>", unsafe_allow_html=True)
 st.divider()
 
-# --- SIDEBAR WITH PREVIEWS & AUTO-DATES ---
-with st.sidebar:
-    st.header("📥 Data Input", divider="gray")
-    
-    # Image 1
+# --- UPLOAD SECTION (Now on main page) ---
+st.subheader("📥 Upload Satellite Images", divider="gray")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     st.subheader("Period 1 (T1)")
     img1_file = st.file_uploader("Upload T1 Image", type=["png", "jpg", "jpeg"], key="img1")
     
-    # Auto-detect year and show preview
     year1_default = get_year_from_file(img1_file) if img1_file else 2015
     year1 = st.number_input("Year T1", value=year1_default, step=1, key="year1_input")
     
     if img1_file:
         st.image(img1_file, caption=f"Preview T1 ({year1})", use_column_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.divider()
-    
-    # Image 2
+with col2:
+    st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     st.subheader("Period 2 (T2)")
     img2_file = st.file_uploader("Upload T2 Image", type=["png", "jpg", "jpeg"], key="img2")
     
-    # Auto-detect year and show preview
     year2_default = get_year_from_file(img2_file) if img2_file else 2023
     year2 = st.number_input("Year T2", value=year2_default, step=1, key="year2_input")
     
     if img2_file:
         st.image(img2_file, caption=f"Preview T2 ({year2})", use_column_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-    st.divider()
-    analyze_btn = st.button("🚀 Run Analysis", type="primary")
+# Analyze Button
+analyze_btn = st.button("🚀 Run Analysis", type="primary")
 
 # --- MAIN CONTENT ---
 if analyze_btn:
@@ -251,7 +243,6 @@ if analyze_btn:
                     Patch(facecolor='#FF0000', label=f'New Urban (+{new:.2f} km²)', color='white'),
                     Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)', color='white')
                 ]
-                # Fix legend text color to white
                 leg = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=True)
                 for text in leg.get_texts():
                     text.set_color('#F8FAFC')
@@ -260,11 +251,10 @@ if analyze_btn:
                 
                 st.pyplot(fig)
                 
-                # --- PDF DOWNLOAD BUTTON ---
+                # PDF DOWNLOAD
                 st.divider()
                 st.subheader("📄 Export Report")
                 
-                # Convert matplotlib figure to PIL Image for PDF
                 fig.canvas.draw()
                 map_img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
                 
@@ -278,4 +268,4 @@ if analyze_btn:
                     use_container_width=True
                 )
 else:
-    st.info("👈 Upload your satellite images in the sidebar to see previews and auto-detected dates.")
+    st.info("👆 Upload your satellite images above and click **Run Analysis** to begin.")
