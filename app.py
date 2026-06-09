@@ -12,7 +12,7 @@ from fpdf import FPDF
 import io
 import re
 
-# --- 1. GLOBAL SETTINGS & FIXING TEXT COLORS ---
+# --- 1. GLOBAL SETTINGS ---
 plt.rcParams.update({
     'text.color': '#F8FAFC',
     'axes.labelcolor': '#F8FAFC',
@@ -52,7 +52,6 @@ st.markdown("""
         padding: 10px;
     }
     
-    /* Style the upload containers */
     .upload-container {
         background-color: #1E293B;
         padding: 20px;
@@ -63,7 +62,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. CONFIGURATION & MODEL LOADING ---
+# --- 2. CONFIGURATION & MODEL ---
 st.set_page_config(page_title="Urban Change Detector", page_icon="🏙️", layout="wide")
 
 DEVICE = torch.device('cpu') 
@@ -80,7 +79,7 @@ def load_model():
 
 model = load_model()
 
-# --- 3. HELPER FUNCTIONS ---
+# --- 3. HELPERS ---
 def get_year_from_file(file):
     if file is None: return None
     try:
@@ -94,7 +93,6 @@ def get_year_from_file(file):
 
     match = re.search(r'(19|20)\d{2}', file.name)
     if match: return int(match.group(0))
-    
     return None
 
 def preprocess(uploaded_file):
@@ -157,11 +155,10 @@ def create_pdf_report(stats, change_map_img):
     return pdf.output()
 
 # --- 4. UI LAYOUT ---
-st.markdown("<h1 style='text-align: center; color: #10B981;'>️ Urban Change Detection</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #10B981;'>🏙️ Urban Change Detection</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis</p>", unsafe_allow_html=True)
 st.divider()
 
-# --- UPLOAD SECTION (Now on main page) ---
 st.subheader("📥 Upload Satellite Images", divider="gray")
 
 col1, col2 = st.columns(2)
@@ -190,10 +187,8 @@ with col2:
         st.image(img2_file, caption=f"Preview T2 ({year2})", use_column_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-# Analyze Button
 analyze_btn = st.button("🚀 Run Analysis", type="primary")
 
-# --- MAIN CONTENT ---
 if analyze_btn:
     if not img1_file or not img2_file:
         st.error("⚠️ Please upload both images to proceed.")
@@ -207,7 +202,6 @@ if analyze_btn:
             
             stats = {'y1': year1, 'y2': year2, 'u1': u1, 'u2': u2, 'new': new, 'loss': loss, 'net': net, 'gr': gr}
             
-            # METRICS
             st.subheader("📊 Analytics Summary", divider="gray")
             col1, col2, col3, col4 = st.columns(4)
             col1.metric(f"Urban Area {year1}", f"{u1:.2f} km²")
@@ -217,7 +211,6 @@ if analyze_btn:
             
             st.divider()
             
-            # VISUALIZATION
             st.subheader("🗺️ Visual Analysis", divider="gray")
             tab1, tab2, tab3 = st.tabs(["📸 Original", "🤖 AI Masks", "🔄 Change Map"])
             
@@ -237,13 +230,16 @@ if analyze_btn:
                 ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
                 ax.axis('off')
                 
+                # FIX: Legend Colors
                 legend_elements = [
-                    Patch(facecolor='#90EE90', label='Stable Non-Urban', color='white'),
-                    Patch(facecolor='#800000', label='Stable Urban', color='white'),
-                    Patch(facecolor='#FF0000', label=f'New Urban (+{new:.2f} km²)', color='white'),
-                    Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)', color='white')
+                    Patch(facecolor='#90EE90', label='Stable Non-Urban'),
+                    Patch(facecolor='#800000', label='Stable Urban'),
+                    Patch(facecolor='#FF0000', label=f'New Urban (+{new:.2f} km²)'),
+                    Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)')
                 ]
                 leg = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=True)
+                
+                # Force text color to white without breaking the box colors
                 for text in leg.get_texts():
                     text.set_color('#F8FAFC')
                 leg.get_frame().set_facecolor('#1E293B')
@@ -251,12 +247,17 @@ if analyze_btn:
                 
                 st.pyplot(fig)
                 
-                # PDF DOWNLOAD
                 st.divider()
-                st.subheader("📄 Export Report")
+                st.subheader(" Export Report")
                 
+                # FIX: PDF Generation Error
                 fig.canvas.draw()
-                map_img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
+                # Use buffer_rgba() instead of tostring_rgb()
+                width, height = fig.canvas.get_width_height()
+                buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
+                buf = buf.reshape(height, width, 4)
+                # Convert RGBA to RGB
+                map_img = Image.fromarray(buf[:, :, :3], 'RGB')
                 
                 pdf_bytes = create_pdf_report(stats, map_img)
                 
@@ -268,4 +269,4 @@ if analyze_btn:
                     use_container_width=True
                 )
 else:
-    st.info("👆 Upload your satellite images above and click **Run Analysis** to begin.")
+    st.info(" Upload your satellite images above and click **Run Analysis** to begin.")
