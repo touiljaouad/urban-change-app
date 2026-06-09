@@ -12,7 +12,7 @@ from fpdf import FPDF
 import io
 import re
 
-# --- 1. GLOBAL SETTINGS ---
+# --- 1. GLOBAL SETTINGS (For Streamlit Dark UI) ---
 plt.rcParams.update({
     'text.color': '#F8FAFC',
     'axes.labelcolor': '#F8FAFC',
@@ -114,11 +114,11 @@ def calc_stats(m1, m2, y1, y2):
     gr = (net/u1*100) if u1 > 0 else 0
     return cm, u1, u2, new, loss, net, gr, yrs
 
-# --- 4. COMPREHENSIVE PDF GENERATOR ---
+# --- 4. COMPREHENSIVE PDF GENERATOR (FIXED COLORS) ---
 def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask1_pil, mask2_pil):
     pdf = FPDF()
     
-    # Helper to generate dynamic conclusion
+    # Dynamic Conclusion Logic
     trend = "expansion" if stats['net'] > 0 else "contraction" if stats['net'] < 0 else "stability"
     if stats['new'] > stats['loss']:
         dev_note = "New urban developments outweighed urban loss, indicating active infrastructure growth."
@@ -130,22 +130,36 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
                   f"Specifically, {stats['new']:.2f} km² of new urban areas were detected, while {stats['loss']:.2f} km² of previously urbanized land was lost. "
                   f"{dev_note} This data is critical for future urban planning and resource allocation.")
 
+    # Save temp images
+    orig1_pil.save("temp_orig1.png")
+    orig2_pil.save("temp_orig2.png")
+    mask1_pil.save("temp_mask1.png")
+    mask2_pil.save("temp_mask2.png")
+    change_map_img.save("temp_map.png")
+
     # ================= PAGE 1: EXECUTIVE SUMMARY =================
     pdf.add_page()
-    pdf.set_font("Helvetica", "B", 20)
-    pdf.set_text_color(16, 185, 129) # Green title
-    pdf.cell(0, 20, "Urban Change Detection Report", ln=True, align="C")
+    
+    # Header with green background band
+    pdf.set_fill_color(16, 185, 129) # Emerald green
+    pdf.rect(0, 0, 220, 35, style='F')
+    pdf.set_font("Helvetica", "B", 22)
+    pdf.set_text_color(255, 255, 255) # White text on green banner
+    pdf.cell(0, 25, "Urban Change Detection Report", ln=True, align="C")
     pdf.ln(5)
     
+    # Subheader
     pdf.set_font("Helvetica", "", 12)
-    pdf.set_text_color(248, 250, 252)
+    pdf.set_text_color(30, 41, 59) # DARK text for readability
     pdf.cell(0, 10, f"Analysis Period: {stats['y1']} to {stats['y2']}", ln=True, align="C")
-    pdf.ln(10)
+    pdf.ln(8)
     
     # Metrics Section
     pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(15, 23, 42) # Very dark blue/black
     pdf.cell(0, 10, "1. Key Metrics", ln=True)
     pdf.set_font("Helvetica", "", 11)
+    pdf.set_text_color(30, 41, 59) # Dark slate
     pdf.cell(0, 8, f"  - Urban Area ({stats['y1']}): {stats['u1']:.2f} km²", ln=True)
     pdf.cell(0, 8, f"  - Urban Area ({stats['y2']}): {stats['u2']:.2f} km²", ln=True)
     pdf.cell(0, 8, f"  - Net Change: {stats['net']:+.2f} km² ({stats['gr']:+.1f}%)", ln=True)
@@ -155,38 +169,33 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     
     # Conclusion Section
     pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(15, 23, 42)
     pdf.cell(0, 10, "2. Executive Conclusion", ln=True)
     pdf.set_font("Helvetica", "", 11)
+    pdf.set_text_color(30, 41, 59)
     pdf.multi_cell(0, 6, conclusion)
-    
-    # Save images for next pages
-    orig1_pil.save("temp_orig1.png")
-    orig2_pil.save("temp_orig2.png")
-    mask1_pil.save("temp_mask1.png")
-    mask2_pil.save("temp_mask2.png")
-    change_map_img.save("temp_map.png")
 
     # ================= PAGE 2: VISUAL ANALYSIS =================
     pdf.add_page()
     pdf.set_font("Helvetica", "B", 16)
-    pdf.set_text_color(16, 185, 129)
+    pdf.set_text_color(16, 185, 129) # Green title
     pdf.cell(0, 15, "Visual Analysis: Input & AI Detection", ln=True, align="C")
-    pdf.ln(10)
+    pdf.ln(5)
     
     # Original Images
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.set_text_color(248, 250, 252)
-    pdf.cell(95, 8, f"Original Satellite Image ({stats['y1']})", ln=False)
-    pdf.cell(95, 8, f"Original Satellite Image ({stats['y2']})", ln=True)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.set_text_color(30, 41, 59)
+    pdf.cell(95, 8, f"Original Satellite Image ({stats['y1']})", ln=False, align="C")
+    pdf.cell(95, 8, f"Original Satellite Image ({stats['y2']})", ln=True, align="C")
     
     pdf.image("temp_orig1.png", x=10, w=90)
     pdf.image("temp_orig2.png", x=110, w=90)
     pdf.ln(5)
     
     # Masks
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y1']})", ln=False)
-    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y2']})", ln=True)
+    pdf.set_font("Helvetica", "B", 11)
+    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y1']})", ln=False, align="C")
+    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y2']})", ln=True, align="C")
     
     pdf.image("temp_mask1.png", x=10, w=90)
     pdf.image("temp_mask2.png", x=110, w=90)
@@ -196,10 +205,10 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.set_font("Helvetica", "B", 16)
     pdf.set_text_color(16, 185, 129)
     pdf.cell(0, 15, "Change Detection Mapping", ln=True, align="C")
-    pdf.ln(10)
+    pdf.ln(5)
     
     pdf.set_font("Helvetica", "", 11)
-    pdf.set_text_color(248, 250, 252)
+    pdf.set_text_color(30, 41, 59)
     pdf.multi_cell(0, 6, "The map below illustrates the spatial distribution of urban changes. Red indicates new urban expansion, orange indicates urban loss, dark red represents stable urban areas, and light green represents stable non-urban land.")
     pdf.ln(5)
     
@@ -250,7 +259,6 @@ if analyze_btn:
             
             stats = {'y1': year1, 'y2': year2, 'u1': u1, 'u2': u2, 'new': new, 'loss': loss, 'net': net, 'gr': gr}
             
-            # Convert masks to PIL for PDF (scale 0-1 to 0-255)
             mask1_pil = Image.fromarray((mask1 * 255).astype(np.uint8))
             mask2_pil = Image.fromarray((mask2 * 255).astype(np.uint8))
             orig1_pil = Image.fromarray((disp1 * 255).astype(np.uint8))
@@ -265,7 +273,7 @@ if analyze_btn:
             
             st.divider()
             st.subheader("🗺️ Visual Analysis", divider="gray")
-            tab1, tab2, tab3 = st.tabs(["📸 Original", " AI Masks", "🔄 Change Map"])
+            tab1, tab2, tab3 = st.tabs(["📸 Original", "🤖 AI Masks", "🔄 Change Map"])
             
             with tab1:
                 c1, c2 = st.columns(2)
@@ -295,7 +303,6 @@ if analyze_btn:
                 st.divider()
                 st.subheader("📄 Export Comprehensive Report")
                 
-                # Generate PDF with ALL data
                 fig.canvas.draw()
                 width, height = fig.canvas.get_width_height()
                 buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
