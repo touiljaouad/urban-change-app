@@ -152,10 +152,17 @@ def create_pdf_report(stats, change_map_img):
     change_map_img.save(temp_path)
     pdf.image(temp_path, x=10, w=190)
     
-    return pdf.output()
+    # FIX: Force output to be bytes
+    pdf_output = pdf.output()
+    if isinstance(pdf_output, str):
+        pdf_bytes = pdf_output.encode('latin-1')
+    else:
+        pdf_bytes = bytes(pdf_output)
+        
+    return pdf_bytes
 
 # --- 4. UI LAYOUT ---
-st.markdown("<h1 style='text-align: center; color: #10B981;'>🏙️ Urban Change Detection</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center; color: #10B981;'>️ Urban Change Detection</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis</p>", unsafe_allow_html=True)
 st.divider()
 
@@ -191,7 +198,7 @@ analyze_btn = st.button("🚀 Run Analysis", type="primary")
 
 if analyze_btn:
     if not img1_file or not img2_file:
-        st.error("⚠️ Please upload both images to proceed.")
+        st.error("️ Please upload both images to proceed.")
     else:
         with st.spinner('Processing satellite imagery...'):
             chw1, disp1 = preprocess(img1_file)
@@ -230,7 +237,6 @@ if analyze_btn:
                 ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
                 ax.axis('off')
                 
-                # FIX: Legend Colors
                 legend_elements = [
                     Patch(facecolor='#90EE90', label='Stable Non-Urban'),
                     Patch(facecolor='#800000', label='Stable Urban'),
@@ -239,7 +245,6 @@ if analyze_btn:
                 ]
                 leg = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=True)
                 
-                # Force text color to white without breaking the box colors
                 for text in leg.get_texts():
                     text.set_color('#F8FAFC')
                 leg.get_frame().set_facecolor('#1E293B')
@@ -248,15 +253,12 @@ if analyze_btn:
                 st.pyplot(fig)
                 
                 st.divider()
-                st.subheader(" Export Report")
+                st.subheader("📄 Export Report")
                 
-                # FIX: PDF Generation Error
                 fig.canvas.draw()
-                # Use buffer_rgba() instead of tostring_rgb()
                 width, height = fig.canvas.get_width_height()
                 buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
                 buf = buf.reshape(height, width, 4)
-                # Convert RGBA to RGB
                 map_img = Image.fromarray(buf[:, :, :3], 'RGB')
                 
                 pdf_bytes = create_pdf_report(stats, map_img)
@@ -269,4 +271,4 @@ if analyze_btn:
                     use_container_width=True
                 )
 else:
-    st.info(" Upload your satellite images above and click **Run Analysis** to begin.")
+    st.info("👆 Upload your satellite images above and click **Run Analysis** to begin.")
