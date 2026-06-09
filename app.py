@@ -28,11 +28,9 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
-
     label, p, div[data-testid="stMetricLabel"], div[data-testid="stMetricValue"], h1, h2, h3, h4 {
         color: #F8FAFC !important;
     }
-    
     div.stButton > button {
         background-color: #10B981;
         color: white !important;
@@ -42,16 +40,12 @@ st.markdown("""
         border: none;
         width: 100%;
     }
-    div.stButton > button:hover {
-        background-color: #059669;
-    }
-
+    div.stButton > button:hover { background-color: #059669; }
     div[data-testid="stFileUploader"] {
         border: 1px dashed #475569;
         border-radius: 8px;
         padding: 10px;
     }
-    
     .upload-container {
         background-color: #1E293B;
         padding: 20px;
@@ -64,7 +58,6 @@ st.markdown("""
 
 # --- 2. CONFIGURATION & MODEL ---
 st.set_page_config(page_title="Urban Change Detector", page_icon="🏙️", layout="wide")
-
 DEVICE = torch.device('cpu') 
 IMAGE_SIZE = 256
 PIXEL_RESOLUTION = 10 
@@ -76,7 +69,6 @@ def load_model():
     model.to(DEVICE)
     model.eval()
     return model
-
 model = load_model()
 
 # --- 3. HELPERS ---
@@ -90,7 +82,6 @@ def get_year_from_file(file):
             year = int(date_str.split(':')[0])
             if 1900 < year < 2100: return year
     except: pass
-
     match = re.search(r'(19|20)\d{2}', file.name)
     if match: return int(match.group(0))
     return None
@@ -123,82 +114,132 @@ def calc_stats(m1, m2, y1, y2):
     gr = (net/u1*100) if u1 > 0 else 0
     return cm, u1, u2, new, loss, net, gr, yrs
 
-def create_pdf_report(stats, change_map_img):
+# --- 4. COMPREHENSIVE PDF GENERATOR ---
+def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask1_pil, mask2_pil):
     pdf = FPDF()
-    pdf.add_page()
-    pdf.set_font("Helvetica", "B", 16)
-    pdf.set_text_color(248, 250, 252)
-    pdf.set_fill_color(15, 23, 42)
-    pdf.cell(0, 15, "Urban Change Detection Report", ln=True, align="C", fill=True)
-    pdf.ln(10)
     
-    pdf.set_font("Helvetica", "", 12)
-    pdf.cell(0, 10, f"Analysis Period: {stats['y1']} to {stats['y2']}", ln=True)
+    # Helper to generate dynamic conclusion
+    trend = "expansion" if stats['net'] > 0 else "contraction" if stats['net'] < 0 else "stability"
+    if stats['new'] > stats['loss']:
+        dev_note = "New urban developments outweighed urban loss, indicating active infrastructure growth."
+    else:
+        dev_note = "Urban loss exceeded new developments, suggesting potential redevelopment or environmental reclamation."
+    
+    conclusion = (f"Between {stats['y1']} and {stats['y2']}, the analyzed region experienced significant urban {trend}. "
+                  f"The total urban area changed by {stats['net']:+.2f} km², representing a {stats['gr']:+.1f}% variation over the period. "
+                  f"Specifically, {stats['new']:.2f} km² of new urban areas were detected, while {stats['loss']:.2f} km² of previously urbanized land was lost. "
+                  f"{dev_note} This data is critical for future urban planning and resource allocation.")
+
+    # ================= PAGE 1: EXECUTIVE SUMMARY =================
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 20)
+    pdf.set_text_color(16, 185, 129) # Green title
+    pdf.cell(0, 20, "Urban Change Detection Report", ln=True, align="C")
     pdf.ln(5)
     
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 10, "Key Metrics:", ln=True)
-    pdf.set_font("Helvetica", "", 11)
-    pdf.cell(0, 8, f"- Urban Area {stats['y1']}: {stats['u1']:.2f} km²", ln=True)
-    pdf.cell(0, 8, f"- Urban Area {stats['y2']}: {stats['u2']:.2f} km²", ln=True)
-    pdf.cell(0, 8, f"- Net Change: {stats['net']:+.2f} km² ({stats['gr']:+.1f}%)", ln=True)
-    pdf.cell(0, 8, f"- New Urban Expansion: +{stats['new']:.2f} km²", ln=True)
-    pdf.cell(0, 8, f"- Urban Loss: -{stats['loss']:.2f} km²", ln=True)
+    pdf.set_font("Helvetica", "", 12)
+    pdf.set_text_color(248, 250, 252)
+    pdf.cell(0, 10, f"Analysis Period: {stats['y1']} to {stats['y2']}", ln=True, align="C")
     pdf.ln(10)
     
-    pdf.set_font("Helvetica", "B", 12)
-    pdf.cell(0, 10, "Change Map:", ln=True)
-    temp_path = "temp_map.png"
-    change_map_img.save(temp_path)
-    pdf.image(temp_path, x=10, w=190)
+    # Metrics Section
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 10, "1. Key Metrics", ln=True)
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 8, f"  - Urban Area ({stats['y1']}): {stats['u1']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"  - Urban Area ({stats['y2']}): {stats['u2']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"  - Net Change: {stats['net']:+.2f} km² ({stats['gr']:+.1f}%)", ln=True)
+    pdf.cell(0, 8, f"  - New Urban Expansion: +{stats['new']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"  - Urban Loss: -{stats['loss']:.2f} km²", ln=True)
+    pdf.ln(10)
     
-    # FIX: Force output to be bytes
-    pdf_output = pdf.output()
-    if isinstance(pdf_output, str):
-        pdf_bytes = pdf_output.encode('latin-1')
-    else:
-        pdf_bytes = bytes(pdf_output)
-        
-    return pdf_bytes
+    # Conclusion Section
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.cell(0, 10, "2. Executive Conclusion", ln=True)
+    pdf.set_font("Helvetica", "", 11)
+    pdf.multi_cell(0, 6, conclusion)
+    
+    # Save images for next pages
+    orig1_pil.save("temp_orig1.png")
+    orig2_pil.save("temp_orig2.png")
+    mask1_pil.save("temp_mask1.png")
+    mask2_pil.save("temp_mask2.png")
+    change_map_img.save("temp_map.png")
 
-# --- 4. UI LAYOUT ---
-st.markdown("<h1 style='text-align: center; color: #10B981;'>️ Urban Change Detection</h1>", unsafe_allow_html=True)
+    # ================= PAGE 2: VISUAL ANALYSIS =================
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(16, 185, 129)
+    pdf.cell(0, 15, "Visual Analysis: Input & AI Detection", ln=True, align="C")
+    pdf.ln(10)
+    
+    # Original Images
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.set_text_color(248, 250, 252)
+    pdf.cell(95, 8, f"Original Satellite Image ({stats['y1']})", ln=False)
+    pdf.cell(95, 8, f"Original Satellite Image ({stats['y2']})", ln=True)
+    
+    pdf.image("temp_orig1.png", x=10, w=90)
+    pdf.image("temp_orig2.png", x=110, w=90)
+    pdf.ln(5)
+    
+    # Masks
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y1']})", ln=False)
+    pdf.cell(95, 8, f"AI Detected Urban Mask ({stats['y2']})", ln=True)
+    
+    pdf.image("temp_mask1.png", x=10, w=90)
+    pdf.image("temp_mask2.png", x=110, w=90)
+
+    # ================= PAGE 3: CHANGE MAPPING =================
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(16, 185, 129)
+    pdf.cell(0, 15, "Change Detection Mapping", ln=True, align="C")
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", "", 11)
+    pdf.set_text_color(248, 250, 252)
+    pdf.multi_cell(0, 6, "The map below illustrates the spatial distribution of urban changes. Red indicates new urban expansion, orange indicates urban loss, dark red represents stable urban areas, and light green represents stable non-urban land.")
+    pdf.ln(5)
+    
+    pdf.image("temp_map.png", x=10, w=190)
+    
+    # Output as bytes
+    pdf_output = pdf.output()
+    return bytes(pdf_output) if not isinstance(pdf_output, bytes) else pdf_output
+
+# --- 5. UI LAYOUT ---
+st.markdown("<h1 style='text-align: center; color: #10B981;'>🏙️ Urban Change Detection</h1>", unsafe_allow_html=True)
 st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis</p>", unsafe_allow_html=True)
 st.divider()
 
 st.subheader("📥 Upload Satellite Images", divider="gray")
-
 col1, col2 = st.columns(2)
 
 with col1:
     st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     st.subheader("Period 1 (T1)")
     img1_file = st.file_uploader("Upload T1 Image", type=["png", "jpg", "jpeg"], key="img1")
-    
     year1_default = get_year_from_file(img1_file) if img1_file else 2015
     year1 = st.number_input("Year T1", value=year1_default, step=1, key="year1_input")
-    
-    if img1_file:
-        st.image(img1_file, caption=f"Preview T1 ({year1})", use_column_width=True)
+    if img1_file: st.image(img1_file, caption=f"Preview T1 ({year1})", use_column_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.markdown('<div class="upload-container">', unsafe_allow_html=True)
     st.subheader("Period 2 (T2)")
     img2_file = st.file_uploader("Upload T2 Image", type=["png", "jpg", "jpeg"], key="img2")
-    
     year2_default = get_year_from_file(img2_file) if img2_file else 2023
     year2 = st.number_input("Year T2", value=year2_default, step=1, key="year2_input")
-    
-    if img2_file:
-        st.image(img2_file, caption=f"Preview T2 ({year2})", use_column_width=True)
+    if img2_file: st.image(img2_file, caption=f"Preview T2 ({year2})", use_column_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 analyze_btn = st.button("🚀 Run Analysis", type="primary")
 
 if analyze_btn:
     if not img1_file or not img2_file:
-        st.error("️ Please upload both images to proceed.")
+        st.error("⚠️ Please upload both images to proceed.")
     else:
         with st.spinner('Processing satellite imagery...'):
             chw1, disp1 = preprocess(img1_file)
@@ -209,6 +250,12 @@ if analyze_btn:
             
             stats = {'y1': year1, 'y2': year2, 'u1': u1, 'u2': u2, 'new': new, 'loss': loss, 'net': net, 'gr': gr}
             
+            # Convert masks to PIL for PDF (scale 0-1 to 0-255)
+            mask1_pil = Image.fromarray((mask1 * 255).astype(np.uint8))
+            mask2_pil = Image.fromarray((mask2 * 255).astype(np.uint8))
+            orig1_pil = Image.fromarray((disp1 * 255).astype(np.uint8))
+            orig2_pil = Image.fromarray((disp2 * 255).astype(np.uint8))
+            
             st.subheader("📊 Analytics Summary", divider="gray")
             col1, col2, col3, col4 = st.columns(4)
             col1.metric(f"Urban Area {year1}", f"{u1:.2f} km²")
@@ -217,26 +264,22 @@ if analyze_btn:
             col4.metric("Annual Growth", f"{gr/yrs:+.2f} %/yr")
             
             st.divider()
-            
             st.subheader("🗺️ Visual Analysis", divider="gray")
-            tab1, tab2, tab3 = st.tabs(["📸 Original", "🤖 AI Masks", "🔄 Change Map"])
+            tab1, tab2, tab3 = st.tabs(["📸 Original", " AI Masks", "🔄 Change Map"])
             
             with tab1:
                 c1, c2 = st.columns(2)
                 c1.image(disp1, caption=f"T1 ({year1})", use_column_width=True)
                 c2.image(disp2, caption=f"T2 ({year2})", use_column_width=True)
-                
             with tab2:
                 c1, c2 = st.columns(2)
                 c1.image(mask1*255, caption=f"Mask {year1}", use_column_width=True, clamp=True)
                 c2.image(mask2*255, caption=f"Mask {year2}", use_column_width=True, clamp=True)
-                
             with tab3:
                 fig, ax = plt.subplots(figsize=(10, 6))
                 cmap = ListedColormap(['#90EE90', '#FF0000', '#FFA500', '#800000'])
                 ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
                 ax.axis('off')
-                
                 legend_elements = [
                     Patch(facecolor='#90EE90', label='Stable Non-Urban'),
                     Patch(facecolor='#800000', label='Stable Urban'),
@@ -244,27 +287,25 @@ if analyze_btn:
                     Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)')
                 ]
                 leg = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=True)
-                
-                for text in leg.get_texts():
-                    text.set_color('#F8FAFC')
+                for text in leg.get_texts(): text.set_color('#F8FAFC')
                 leg.get_frame().set_facecolor('#1E293B')
                 leg.get_frame().set_edgecolor('#334155')
-                
                 st.pyplot(fig)
                 
                 st.divider()
-                st.subheader("📄 Export Report")
+                st.subheader("📄 Export Comprehensive Report")
                 
+                # Generate PDF with ALL data
                 fig.canvas.draw()
                 width, height = fig.canvas.get_width_height()
                 buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
                 buf = buf.reshape(height, width, 4)
                 map_img = Image.fromarray(buf[:, :, :3], 'RGB')
                 
-                pdf_bytes = create_pdf_report(stats, map_img)
+                pdf_bytes = generate_comprehensive_pdf(stats, map_img, orig1_pil, orig2_pil, mask1_pil, mask2_pil)
                 
                 st.download_button(
-                    label="⬇️ Download PDF Report",
+                    label="⬇️ Download Full PDF Report",
                     data=pdf_bytes,
                     file_name=f"Urban_Change_Report_{year1}_{year2}.pdf",
                     mime="application/pdf",
