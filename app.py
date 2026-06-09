@@ -8,8 +8,23 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import ListedColormap
 from matplotlib.patches import Patch
 from model import UNet
+from fpdf import FPDF
+import io
+import re
 
-# --- 1. CUSTOM CSS FOR AESTHETICS ---
+# --- 1. GLOBAL SETTINGS & FIXING TEXT COLORS ---
+# Force Matplotlib to use light text for dark mode
+plt.rcParams.update({
+    'text.color': '#F8FAFC',
+    'axes.labelcolor': '#F8FAFC',
+    'axes.edgecolor': '#334155',
+    'axes.facecolor': '#1E293B',
+    'figure.facecolor': '#0F172A',
+    'xtick.color': '#F8FAFC',
+    'ytick.color': '#F8FAFC'
+})
+
+# Custom CSS to force white text everywhere and style the UI
 st.markdown("""
 <style>
     /* Hide default Streamlit footer and menu */
@@ -17,20 +32,23 @@ st.markdown("""
     footer {visibility: hidden;}
     header {visibility: hidden;}
 
+    /* Force white text for labels and metrics */
+    label, p, div[data-testid="stMetricLabel"], div[data-testid="stMetricValue"], h1, h2, h3, h4 {
+        color: #F8FAFC !important;
+    }
+    
     /* Style the main button */
     div.stButton > button {
         background-color: #10B981;
-        color: white;
+        color: white !important;
         border-radius: 8px;
         padding: 12px 24px;
         font-weight: 600;
         border: none;
         width: 100%;
-        transition: all 0.3s ease;
     }
     div.stButton > button:hover {
         background-color: #059669;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
     }
 
     /* Style the sidebar */
@@ -45,19 +63,11 @@ st.markdown("""
         border-radius: 8px;
         padding: 10px;
     }
-
-    /* Custom Metric styling */
-    .metric-container {
-        background-color: #1E293B;
-        padding: 15px;
-        border-radius: 10px;
-        border: 1px solid #334155;
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # --- 2. CONFIGURATION & MODEL LOADING ---
-st.set_page_config(page_title="Urban Change Detector", page_icon="️", layout="wide")
+st.set_page_config(page_title="Urban Change Detector", page_icon="🏙️", layout="wide")
 
 DEVICE = torch.device('cpu') 
 IMAGE_SIZE = 256
@@ -74,6 +84,26 @@ def load_model():
 model = load_model()
 
 # --- 3. HELPER FUNCTIONS ---
+
+# Auto-detect year from EXIF or Filename
+def get_year_from_file(file):
+    if file is None: return None
+    try:
+        # 1. Try EXIF metadata
+        img = Image.open(file)
+        exif = img._getexif()
+        if exif and 36867 in exif: # DateTimeOriginal
+            date_str = exif[36867]
+            year = int(date_str.split(':')[0])
+            if 1900 < year < 2100: return year
+    except: pass
+
+    # 2. Try finding a year in the filename (e.g., "satellite_2015.png")
+    match = re.search(r'(19|20)\d{2}', file.name)
+    if match: return int(match.group(0))
+    
+    return None
+
 def preprocess(uploaded_file):
     img = Image.open(uploaded_file).convert('RGB')
     img = np.array(img).astype(np.float32)
@@ -92,9 +122,9 @@ def calc_stats(m1, m2, y1, y2):
     px_km2 = (PIXEL_RESOLUTION**2) / 1e6
     u1, u2 = m1.sum() * px_km2, m2.sum() * px_km2
     cm = np.zeros_like(m1, dtype=np.uint8)
-    cm[(m1==0)&(m2==1)] = 1
-    cm[(m1==1)&(m2==0)] = 2
-    cm[(m1==1)&(m2==1)] = 3
+    cm[(m1==0)&(m2==1)] = 1 # Expansion
+    cm[(m1==1)&(m2==0)] = 2 # Loss
+    cm[(m1==1)&(m2==1)] = 3 # Stable
     new = (cm==1).sum() * px_km2
     loss = (cm==2).sum() * px_km2
     net = u2 - u1
@@ -102,27 +132,76 @@ def calc_stats(m1, m2, y1, y2):
     gr = (net/u1*100) if u1 > 0 else 0
     return cm, u1, u2, new, loss, net, gr, yrs
 
-# --- 4. MODERN UI LAYOUT ---
-# Header
+# PDF Generator
+def create_pdf_report(stats, change_map_img):
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Helvetica", "B", 16)
+    pdf.set_text_color(248, 250, 252) # White text
+    pdf.set_fill_color(15, 23, 42)    # Dark background
+    pdf.cell(0, 15, "Urban Change Detection Report", ln=True, align="C", fill=True)
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", "", 12)
+    pdf.cell(0, 10, f"Analysis Period: {stats['y1']} to {stats['y2']}", ln=True)
+    pdf.ln(5)
+    
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 10, "Key Metrics:", ln=True)
+    pdf.set_font("Helvetica", "", 11)
+    pdf.cell(0, 8, f"- Urban Area {stats['y1']}: {stats['u1']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"- Urban Area {stats['y2']}: {stats['u2']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"- Net Change: {stats['net']:+.2f} km² ({stats['gr']:+.1f}%)", ln=True)
+    pdf.cell(0, 8, f"- New Urban Expansion: +{stats['new']:.2f} km²", ln=True)
+    pdf.cell(0, 8, f"- Urban Loss: -{stats['loss']:.2f} km²", ln=True)
+    pdf.ln(10)
+    
+    pdf.set_font("Helvetica", "B", 12)
+    pdf.cell(0, 10, "Change Map:", ln=True)
+    # Save image temporarily to add to PDF
+    temp_path = "temp_map.png"
+    change_map_img.save(temp_path)
+    pdf.image(temp_path, x=10, w=190)
+    
+    return pdf.output()
+
+# --- 4. UI LAYOUT ---
 st.markdown("<h1 style='text-align: center; color: #10B981;'>🏙️ Urban Change Detection</h1>", unsafe_allow_html=True)
-st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis for urban expansion tracking</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #94A3B8;'>AI-powered satellite imagery analysis</p>", unsafe_allow_html=True)
 st.divider()
 
-# Sidebar
+# --- SIDEBAR WITH PREVIEWS & AUTO-DATES ---
 with st.sidebar:
     st.header("📥 Data Input", divider="gray")
-    year1 = st.number_input("Year of Image 1 (T1)", value=2015, step=1)
-    img1_file = st.file_uploader("Upload T1 Image", type=["png", "jpg", "jpeg"])
     
+    # Image 1
+    st.subheader("Period 1 (T1)")
+    img1_file = st.file_uploader("Upload T1 Image", type=["png", "jpg", "jpeg"], key="img1")
+    
+    # Auto-detect year and show preview
+    year1_default = get_year_from_file(img1_file) if img1_file else 2015
+    year1 = st.number_input("Year T1", value=year1_default, step=1, key="year1_input")
+    
+    if img1_file:
+        st.image(img1_file, caption=f"Preview T1 ({year1})", use_column_width=True)
+
     st.divider()
     
-    year2 = st.number_input("Year of Image 2 (T2)", value=2023, step=1)
-    img2_file = st.file_uploader("Upload T2 Image", type=["png", "jpg", "jpeg"])
+    # Image 2
+    st.subheader("Period 2 (T2)")
+    img2_file = st.file_uploader("Upload T2 Image", type=["png", "jpg", "jpeg"], key="img2")
     
+    # Auto-detect year and show preview
+    year2_default = get_year_from_file(img2_file) if img2_file else 2023
+    year2 = st.number_input("Year T2", value=year2_default, step=1, key="year2_input")
+    
+    if img2_file:
+        st.image(img2_file, caption=f"Preview T2 ({year2})", use_column_width=True)
+
     st.divider()
     analyze_btn = st.button("🚀 Run Analysis", type="primary")
 
-# Main Content Area
+# --- MAIN CONTENT ---
 if analyze_btn:
     if not img1_file or not img2_file:
         st.error("⚠️ Please upload both images to proceed.")
@@ -134,56 +213,69 @@ if analyze_btn:
             mask2 = predict(chw2)
             cm, u1, u2, new, loss, net, gr, yrs = calc_stats(mask1, mask2, year1, year2)
             
-            # --- METRICS DASHBOARD ---
+            stats = {'y1': year1, 'y2': year2, 'u1': u1, 'u2': u2, 'new': new, 'loss': loss, 'net': net, 'gr': gr}
+            
+            # METRICS
             st.subheader("📊 Analytics Summary", divider="gray")
             col1, col2, col3, col4 = st.columns(4)
-            
-            with col1:
-                st.metric(label=f"Urban Area {year1}", value=f"{u1:.2f} km²", delta=None)
-            with col2:
-                st.metric(label=f"Urban Area {year2}", value=f"{u2:.2f} km²", delta=None)
-            with col3:
-                st.metric(label="Net Change", value=f"{net:+.2f} km²", delta=f"{gr:+.1f}%")
-            with col4:
-                st.metric(label="Annual Growth", value=f"{gr/yrs:+.2f} %/yr", delta=None)
+            col1.metric(f"Urban Area {year1}", f"{u1:.2f} km²")
+            col2.metric(f"Urban Area {year2}", f"{u2:.2f} km²")
+            col3.metric("Net Change", f"{net:+.2f} km²", f"{gr:+.1f}%")
+            col4.metric("Annual Growth", f"{gr/yrs:+.2f} %/yr")
             
             st.divider()
             
-            # --- VISUALIZATION TABS ---
+            # VISUALIZATION
             st.subheader("🗺️ Visual Analysis", divider="gray")
-            tab1, tab2, tab3 = st.tabs(["📸 Original Imagery", " AI Urban Masks", "🔄 Change Map"])
+            tab1, tab2, tab3 = st.tabs(["📸 Original", "🤖 AI Masks", "🔄 Change Map"])
             
             with tab1:
                 c1, c2 = st.columns(2)
-                with c1:
-                    st.image(disp1, caption=f"Period T1 ({year1})", use_column_width=True)
-                with c2:
-                    st.image(disp2, caption=f"Period T2 ({year2})", use_column_width=True)
-                    
+                c1.image(disp1, caption=f"T1 ({year1})", use_column_width=True)
+                c2.image(disp2, caption=f"T2 ({year2})", use_column_width=True)
+                
             with tab2:
                 c1, c2 = st.columns(2)
-                with c1:
-                    st.image(mask1*255, caption=f"Detected Urban Area ({year1})", use_column_width=True, clamp=True)
-                with c2:
-                    st.image(mask2*255, caption=f"Detected Urban Area ({year2})", use_column_width=True, clamp=True)
-                    
+                c1.image(mask1*255, caption=f"Mask {year1}", use_column_width=True, clamp=True)
+                c2.image(mask2*255, caption=f"Mask {year2}", use_column_width=True, clamp=True)
+                
             with tab3:
-                # Create a nice container for the map
-                with st.container(border=True):
-                    fig, ax = plt.subplots(figsize=(10, 6))
-                    cmap = ListedColormap(['#90EE90', '#FF0000', '#FFA500', '#800000'])
-                    ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
-                    ax.axis('off')
-                    
-                    legend_elements = [
-                        Patch(facecolor='#90EE90', label='Stable Non-Urban'),
-                        Patch(facecolor='#800000', label='Stable Urban'),
-                        Patch(facecolor='#FF0000', label=f'New Urban Expansion (+{new:.2f} km²)'),
-                        Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)')
-                    ]
-                    ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=False, facecolor='#1E293B', edgecolor='#334155', labelcolor='#F8FAFC')
-                    
-                    st.pyplot(fig)
+                fig, ax = plt.subplots(figsize=(10, 6))
+                cmap = ListedColormap(['#90EE90', '#FF0000', '#FFA500', '#800000'])
+                ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
+                ax.axis('off')
+                
+                legend_elements = [
+                    Patch(facecolor='#90EE90', label='Stable Non-Urban', color='white'),
+                    Patch(facecolor='#800000', label='Stable Urban', color='white'),
+                    Patch(facecolor='#FF0000', label=f'New Urban (+{new:.2f} km²)', color='white'),
+                    Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km²)', color='white')
+                ]
+                # Fix legend text color to white
+                leg = ax.legend(handles=legend_elements, loc='lower center', bbox_to_anchor=(0.5, -0.1), ncol=2, frameon=True)
+                for text in leg.get_texts():
+                    text.set_color('#F8FAFC')
+                leg.get_frame().set_facecolor('#1E293B')
+                leg.get_frame().set_edgecolor('#334155')
+                
+                st.pyplot(fig)
+                
+                # --- PDF DOWNLOAD BUTTON ---
+                st.divider()
+                st.subheader("📄 Export Report")
+                
+                # Convert matplotlib figure to PIL Image for PDF
+                fig.canvas.draw()
+                map_img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
+                
+                pdf_bytes = create_pdf_report(stats, map_img)
+                
+                st.download_button(
+                    label="⬇️ Download PDF Report",
+                    data=pdf_bytes,
+                    file_name=f"Urban_Change_Report_{year1}_{year2}.pdf",
+                    mime="application/pdf",
+                    use_container_width=True
+                )
 else:
-    # Empty state
-    st.info("👈 Upload your satellite images in the sidebar and click **Run Analysis** to begin.")
+    st.info("👈 Upload your satellite images in the sidebar to see previews and auto-detected dates.")
