@@ -157,6 +157,32 @@ st.markdown("""
         to { opacity: 1; transform: scale(1); }
     }
     
+    /* Glass card styling for Streamlit columns */
+    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
+        background: rgba(30, 41, 59, 0.3) !important;
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 24px !important;
+        padding: 1.5rem !important;
+        margin: 0.5rem !important;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.4),
+            0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+            0 20px 60px rgba(59, 130, 246, 0.1) !important;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        animation: fadeInUp 0.8s ease-out both;
+    }
+    div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:hover {
+        border-color: rgba(96, 165, 250, 0.4) !important;
+        box-shadow: 
+            0 20px 60px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(255, 255, 255, 0.1) inset,
+            0 0 40px rgba(59, 130, 246, 0.2) !important;
+        transform: translateY(-4px);
+    }
+
+    /* Legacy glass-card class for other uses */
     .glass-card {
         background: rgba(30, 41, 59, 0.3) !important;
         backdrop-filter: blur(20px) saturate(180%);
@@ -724,10 +750,10 @@ st.markdown('''
 # Upload Section with Glassmorphism
 st.markdown('<div class="section-header">📡 Upload Satellite Images</div>', unsafe_allow_html=True)
 
+# Use Streamlit columns with CSS-targeted styling (no HTML wrappers around widgets)
 col1, col2 = st.columns(2)
 
 with col1:
-    st.markdown('<div class="glass-card animate-1">', unsafe_allow_html=True)
     st.subheader("📸 Period 1 (T1)")
     st.caption("Baseline satellite imagery")
     img1_file = st.file_uploader("Drop T1 image", type=["png", "jpg", "jpeg"], key="img1")
@@ -735,10 +761,8 @@ with col1:
     year1 = st.number_input("Year T1", value=year1_default, step=1, key="year1_input")
     if img1_file:
         st.image(img1_file, caption=f"T1 Preview — {year1}", use_column_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
-    st.markdown('<div class="glass-card animate-2">', unsafe_allow_html=True)
     st.subheader("🛸 Period 2 (T2)")
     st.caption("Comparison satellite imagery")
     img2_file = st.file_uploader("Drop T2 image", type=["png", "jpg", "jpeg"], key="img2")
@@ -746,7 +770,6 @@ with col2:
     year2 = st.number_input("Year T2", value=year2_default, step=1, key="year2_input")
     if img2_file:
         st.image(img2_file, caption=f"T2 Preview — {year2}", use_column_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
 
 # Analysis Button - Centered with 3D effect
 st.markdown('<div style="max-width: 450px; margin: 2.5rem auto;">', unsafe_allow_html=True)
