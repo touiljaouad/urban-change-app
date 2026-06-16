@@ -474,6 +474,33 @@ st.markdown("""
             0 0 40px rgba(16, 185, 129, 0.3) !important;
         transform: translateY(-3px) scale(1.02) !important;
     }
+
+    /* Native Streamlit elements inside glass cards */
+    .glass-card h3 {
+        color: #E2E8F0 !important;
+        font-size: 1.3rem !important;
+        font-weight: 700 !important;
+        margin-bottom: 0.25rem !important;
+    }
+    .glass-card p[data-testid="stCaption"] {
+        color: #64748B !important;
+        font-size: 0.8rem !important;
+        margin-bottom: 1rem !important;
+    }
+
+    /* Rotating analysis text animation for spinner */
+    .stSpinner p {
+        font-size: 1.1rem !important;
+        font-weight: 600 !important;
+        color: #60A5FA !important;
+        animation: textPulse 1.5s ease-in-out infinite;
+        text-align: center;
+        margin-top: 1rem;
+    }
+    @keyframes textPulse {
+        0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 10px rgba(96,165,250,0.5); }
+        50% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 20px rgba(96,165,250,0.8); }
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -701,65 +728,30 @@ col1, col2 = st.columns(2)
 
 with col1:
     st.markdown('<div class="glass-card animate-1">', unsafe_allow_html=True)
-    
-    st.markdown('<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">'
-                '<span style="font-size: 2rem; filter: drop-shadow(0 4px 8px rgba(96,165,250,0.4));">📸</span>'
-                '<div>'
-                '<span style="font-size: 1.3rem; font-weight: 700; color: #E2E8F0; display: block;">Period 1 (T1)</span>'
-                '<span style="font-size: 0.8rem; color: #64748B;">Baseline satellite imagery</span>'
-                '</div>'
-                '</div>', unsafe_allow_html=True)
-    
-    img1_file = st.file_uploader("Drop T1 satellite image here", type=["png", "jpg", "jpeg"], key="img1")
+    st.subheader("📸 Period 1 (T1)")
+    st.caption("Baseline satellite imagery")
+    img1_file = st.file_uploader("Drop T1 image", type=["png", "jpg", "jpeg"], key="img1")
     year1_default = get_year_from_file(img1_file) if img1_file else 2015
     year1 = st.number_input("Year T1", value=year1_default, step=1, key="year1_input")
-    
     if img1_file:
-        st.markdown('<div style="margin-top: 1rem; border-radius: 16px; overflow: hidden;">', unsafe_allow_html=True)
         st.image(img1_file, caption=f"T1 Preview — {year1}", use_column_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('''
-        <div style="text-align: center; padding: 2.5rem; color: #475569;">
-            <div style="font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.6; animation: float 3s ease-in-out infinite;">📁</div>
-            <p style="font-size: 0.95rem; color: #64748B; font-weight: 500;">Drag & drop or click to upload</p>
-            <p style="font-size: 0.8rem; color: #475569; margin-top: 0.5rem;">PNG, JPG, JPEG up to 200MB</p>
-        </div>
-        ''', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 with col2:
     st.markdown('<div class="glass-card animate-2">', unsafe_allow_html=True)
-    
-    st.markdown('<div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem;">'
-                '<span style="font-size: 2rem; filter: drop-shadow(0 4px 8px rgba(139,92,246,0.4));">🛸</span>'
-                '<div>'
-                '<span style="font-size: 1.3rem; font-weight: 700; color: #E2E8F0; display: block;">Period 2 (T2)</span>'
-                '<span style="font-size: 0.8rem; color: #64748B;">Comparison satellite imagery</span>'
-                '</div>'
-                '</div>', unsafe_allow_html=True)
-    
-    img2_file = st.file_uploader("Drop T2 satellite image here", type=["png", "jpg", "jpeg"], key="img2")
+    st.subheader("🛸 Period 2 (T2)")
+    st.caption("Comparison satellite imagery")
+    img2_file = st.file_uploader("Drop T2 image", type=["png", "jpg", "jpeg"], key="img2")
     year2_default = get_year_from_file(img2_file) if img2_file else 2023
     year2 = st.number_input("Year T2", value=year2_default, step=1, key="year2_input")
-    
     if img2_file:
-        st.markdown('<div style="margin-top: 1rem; border-radius: 16px; overflow: hidden;">', unsafe_allow_html=True)
         st.image(img2_file, caption=f"T2 Preview — {year2}", use_column_width=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-    else:
-        st.markdown('''
-        <div style="text-align: center; padding: 2.5rem; color: #475569;">
-            <div style="font-size: 3rem; margin-bottom: 0.75rem; opacity: 0.6; animation: float 3s ease-in-out infinite 0.5s;">📁</div>
-            <p style="font-size: 0.95rem; color: #64748B; font-weight: 500;">Drag & drop or click to upload</p>
-            <p style="font-size: 0.8rem; color: #475569; margin-top: 0.5rem;">PNG, JPG, JPEG up to 200MB</p>
-        </div>
-        ''', unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
 # Analysis Button - Centered with 3D effect
 st.markdown('<div style="max-width: 450px; margin: 2.5rem auto;">', unsafe_allow_html=True)
 analyze_btn = st.button("🚀 Launch Analysis", type="primary", use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
