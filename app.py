@@ -39,32 +39,32 @@ st.set_page_config(
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
-    
+
     * { font-family: 'Inter', 'Space Grotesk', sans-serif !important; }
-    
-    #MainMenu, footer, header, [data-testid='stToolbar'] { 
-        visibility: hidden; 
+
+    #MainMenu, footer, header, [data-testid='stToolbar'] {
+        visibility: hidden;
         display: none !important;
     }
-    
+
     .stApp {
         background: linear-gradient(-45deg, #0a0e27, #0f172a, #1a103c, #0d1b2a, #1e1b4b);
         background-size: 400% 400%;
         animation: gradientShift 15s ease infinite;
         background-attachment: fixed;
     }
-    
+
     @keyframes gradientShift {
         0% { background-position: 0% 50%; }
         50% { background-position: 100% 50%; }
         100% { background-position: 0% 50%; }
     }
-    
+
     .stApp::before {
         content: '';
         position: fixed;
         top: 0; left: 0; right: 0; bottom: 0;
-        background-image: 
+        background-image:
             radial-gradient(2px 2px at 20px 30px, rgba(96,165,250,0.3), transparent),
             radial-gradient(2px 2px at 40px 70px, rgba(139,92,246,0.2), transparent),
             radial-gradient(1px 1px at 90px 40px, rgba(244,114,182,0.3), transparent),
@@ -78,17 +78,17 @@ st.markdown("""
         pointer-events: none;
         z-index: 0;
     }
-    
+
     @keyframes particleFloat {
         0% { transform: translateY(0); }
         100% { transform: translateY(-250px); }
     }
-    
+
     ::-webkit-scrollbar { width: 6px; }
     ::-webkit-scrollbar-track { background: #0F172A; }
     ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #3B82F6, #8B5CF6); border-radius: 3px; }
     ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #60A5FA, #A78BFA); }
-    
+
     .hero-container {
         text-align: center;
         padding: 3rem 0 2rem 0;
@@ -143,7 +143,7 @@ st.markdown("""
         0%, 100% { width: 120px; opacity: 0.6; }
         50% { width: 200px; opacity: 1; }
     }
-    
+
     @keyframes fadeInUp {
         from { opacity: 0; transform: translateY(30px); }
         to { opacity: 1; transform: translateY(0); }
@@ -156,7 +156,7 @@ st.markdown("""
         from { opacity: 0; transform: scale(0.8); }
         to { opacity: 1; transform: scale(1); }
     }
-    
+
     /* Glass card styling for Streamlit columns */
     div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="column"] {
         background: rgba(30, 41, 59, 0.3) !important;
@@ -166,7 +166,7 @@ st.markdown("""
         border-radius: 24px !important;
         padding: 1.5rem !important;
         margin: 0.5rem !important;
-        box-shadow: 
+        box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset,
             0 20px 60px rgba(59, 130, 246, 0.1) !important;
@@ -175,7 +175,7 @@ st.markdown("""
     }
     div[data-testid="stVerticalBlock"] > div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:hover {
         border-color: rgba(96, 165, 250, 0.4) !important;
-        box-shadow: 
+        box-shadow:
             0 20px 60px rgba(0, 0, 0, 0.5),
             0 0 0 1px rgba(255, 255, 255, 0.1) inset,
             0 0 40px rgba(59, 130, 246, 0.2) !important;
@@ -190,7 +190,7 @@ st.markdown("""
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 24px !important;
         padding: 2rem !important;
-        box-shadow: 
+        box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset,
             0 20px 60px rgba(59, 130, 246, 0.1) !important;
@@ -201,13 +201,13 @@ st.markdown("""
     }
     .glass-card:hover {
         border-color: rgba(96, 165, 250, 0.4) !important;
-        box-shadow: 
+        box-shadow:
             0 20px 60px rgba(0, 0, 0, 0.5),
             0 0 0 1px rgba(255, 255, 255, 0.1) inset,
             0 0 40px rgba(59, 130, 246, 0.2) !important;
         transform: translateY(-8px) rotateX(2deg);
     }
-    
+
     .section-header {
         font-size: 1.6rem !important;
         font-weight: 700 !important;
@@ -227,7 +227,7 @@ st.markdown("""
         margin-left: 1rem;
         border-radius: 1px;
     }
-    
+
     div.stButton > button:first-child {
         background: linear-gradient(135deg, #3B82F6 0%, #6366F1 50%, #8B5CF6 100%) !important;
         color: white !important;
@@ -238,7 +238,7 @@ st.markdown("""
         border: none !important;
         width: 100% !important;
         letter-spacing: 0.03em;
-        box-shadow: 
+        box-shadow:
             0 4px 15px rgba(59, 130, 246, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.1) inset,
             0 0 30px rgba(59, 130, 246, 0.2) !important;
@@ -269,7 +269,7 @@ st.markdown("""
     }
     div.stButton > button:first-child:hover {
         transform: translateY(-4px) scale(1.02) !important;
-        box-shadow: 
+        box-shadow:
             0 12px 40px rgba(59, 130, 246, 0.6),
             0 0 0 1px rgba(255, 255, 255, 0.15) inset,
             0 0 50px rgba(139, 92, 246, 0.3) !important;
@@ -277,7 +277,7 @@ st.markdown("""
     div.stButton > button:first-child:active {
         transform: translateY(-1px) scale(0.98) !important;
     }
-    
+
     div.stButton > button:not(:first-child) {
         background: rgba(30, 41, 59, 0.6) !important;
         color: #E2E8F0 !important;
@@ -290,14 +290,14 @@ st.markdown("""
         border-color: rgba(96, 165, 250, 0.6) !important;
         transform: translateY(-2px);
     }
-    
+
     div[data-testid='stMetric'] {
         background: rgba(30, 41, 59, 0.3) !important;
         backdrop-filter: blur(10px);
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         border-radius: 20px !important;
         padding: 1.5rem !important;
-        box-shadow: 
+        box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.3),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
         transition: all 0.3s ease;
@@ -305,7 +305,7 @@ st.markdown("""
     }
     div[data-testid='stMetric']:hover {
         transform: translateY(-4px);
-        box-shadow: 
+        box-shadow:
             0 12px 40px rgba(0, 0, 0, 0.4),
             0 0 20px rgba(59, 130, 246, 0.15) !important;
     }
@@ -326,7 +326,7 @@ st.markdown("""
         font-size: 0.9rem !important;
         font-weight: 600 !important;
     }
-    
+
     .stTabs [data-baseweb='tab-list'] {
         gap: 0.5rem;
         background: rgba(15, 23, 42, 0.5);
@@ -353,12 +353,12 @@ st.markdown("""
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.25), rgba(139, 92, 246, 0.25)) !important;
         color: #60A5FA !important;
         font-weight: 600 !important;
-        box-shadow: 
+        box-shadow:
             0 4px 15px rgba(59, 130, 246, 0.3),
             0 0 0 1px rgba(255, 255, 255, 0.1) inset;
         transform: translateY(-2px);
     }
-    
+
     div[data-testid='stNumberInput'] input {
         background: rgba(15, 23, 42, 0.6) !important;
         border: 1px solid rgba(96, 165, 250, 0.2) !important;
@@ -372,7 +372,7 @@ st.markdown("""
         border-color: #3B82F6 !important;
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), 0 2px 8px rgba(0,0,0,0.2) inset !important;
     }
-    
+
     div[data-testid='stFileUploader'] {
         background: transparent !important;
         border: none !important;
@@ -398,28 +398,28 @@ st.markdown("""
     div[data-testid='stFileUploader'] > section > div > small {
         color: #64748B !important;
     }
-    
+
     img {
         border-radius: 16px !important;
-        box-shadow: 
+        box-shadow:
             0 8px 32px rgba(0, 0, 0, 0.4),
             0 0 0 1px rgba(255, 255, 255, 0.05) inset !important;
         transition: all 0.4s ease;
     }
     img:hover {
         transform: translateY(-4px) scale(1.01);
-        box-shadow: 
+        box-shadow:
             0 16px 48px rgba(0, 0, 0, 0.5),
             0 0 20px rgba(59, 130, 246, 0.1) !important;
     }
-    
+
     .stAlert {
         border-radius: 16px !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         box-shadow: 0 4px 20px rgba(0,0,0,0.2) !important;
         backdrop-filter: blur(10px);
     }
-    
+
     .stSpinner > div {
         border-top-color: #3B82F6 !important;
         border-right-color: #8B5CF6 !important;
@@ -432,7 +432,7 @@ st.markdown("""
         to { transform: rotate(360deg); }
     }
 
-    /* Rotating analysis text animation */
+    /* Rotating analysis text animation (single definition — duplicates removed) */
     .stSpinner p {
         font-size: 1.1rem !important;
         font-weight: 600 !important;
@@ -446,20 +446,6 @@ st.markdown("""
         50% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 20px rgba(96,165,250,0.8); }
     }
 
-    /* Rotating analysis text animation */
-    .stSpinner p {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        color: #60A5FA !important;
-        animation: textPulse 1.5s ease-in-out infinite;
-        text-align: center;
-        margin-top: 1rem;
-    }
-    @keyframes textPulse {
-        0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 10px rgba(96,165,250,0.5); }
-        50% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 20px rgba(96,165,250,0.8); }
-    }
-    
     hr {
         border: none !important;
         height: 2px !important;
@@ -467,7 +453,7 @@ st.markdown("""
         margin: 2.5rem 0 !important;
         border-radius: 1px;
     }
-    
+
     .status-pulse {
         display: inline-block;
         width: 10px;
@@ -482,20 +468,20 @@ st.markdown("""
         70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
         100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
-    
+
     .animate-1 { animation-delay: 0.1s; }
     .animate-2 { animation-delay: 0.2s; }
     .animate-3 { animation-delay: 0.3s; }
     .animate-4 { animation-delay: 0.4s; }
-    
+
     .download-btn-wrapper button {
         background: linear-gradient(135deg, #10B981 0%, #059669 50%, #047857 100%) !important;
-        box-shadow: 
+        box-shadow:
             0 4px 15px rgba(16, 185, 129, 0.4),
             0 0 30px rgba(16, 185, 129, 0.2) !important;
     }
     .download-btn-wrapper button:hover {
-        box-shadow: 
+        box-shadow:
             0 8px 25px rgba(16, 185, 129, 0.6),
             0 0 40px rgba(16, 185, 129, 0.3) !important;
         transform: translateY(-3px) scale(1.02) !important;
@@ -513,27 +499,13 @@ st.markdown("""
         font-size: 0.8rem !important;
         margin-bottom: 1rem !important;
     }
-
-    /* Rotating analysis text animation for spinner */
-    .stSpinner p {
-        font-size: 1.1rem !important;
-        font-weight: 600 !important;
-        color: #60A5FA !important;
-        animation: textPulse 1.5s ease-in-out infinite;
-        text-align: center;
-        margin-top: 1rem;
-    }
-    @keyframes textPulse {
-        0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 10px rgba(96,165,250,0.5); }
-        50% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 20px rgba(96,165,250,0.8); }
-    }
 </style>
 """, unsafe_allow_html=True)
 
 # --- 2. CONFIGURATION & MODEL ---
-DEVICE = torch.device('cpu') 
+DEVICE = torch.device('cpu')
 IMAGE_SIZE = 256
-PIXEL_RESOLUTION = 10 
+PIXEL_RESOLUTION = 10
 
 @st.cache_resource
 def load_model():
@@ -596,22 +568,15 @@ class PDF(FPDF):
         self.set_text_color(148, 163, 184)
         self.cell(0, 10, f'Page {self.page_no()}/3 | Urban Change Detection Report | Generated by AI', ln=True, align='C')
 
-class PDF(FPDF):
-    def footer(self):
-        self.set_y(-15)
-        self.set_font('Helvetica', 'I', 8)
-        self.set_text_color(148, 163, 184)
-        self.cell(0, 10, f'Page {self.page_no()}/3 | Urban Change Detection Report | Generated by AI', ln=True, align='C')
-
 def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask1_pil, mask2_pil):
     pdf = PDF()
-    
+
     trend = 'expansion' if stats['net'] > 0 else 'contraction' if stats['net'] < 0 else 'stability'
     if stats['new'] > stats['loss']:
         dev_note = 'New urban developments outweighed urban loss, indicating active infrastructure growth.'
     else:
         dev_note = 'Urban loss exceeded new developments, suggesting potential redevelopment or environmental reclamation.'
-    
+
     y1_str = str(stats['y1'])
     y2_str = str(stats['y2'])
     u1_str = f"{stats['u1']:.2f}"
@@ -620,7 +585,7 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     gr_str = f"{stats['gr']:+.1f}"
     new_str = f"{stats['new']:.2f}"
     loss_str = f"{stats['loss']:.2f}"
-    
+
     conclusion = (
         'Between ' + y1_str + ' and ' + y2_str + ', the analyzed region experienced significant urban ' + trend + '. '
         'The total urban area changed by ' + net_str + ' km2, representing a ' + gr_str + '% variation over the period. '
@@ -638,7 +603,7 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.add_page()
     pdf.set_fill_color(255, 255, 255)
     pdf.rect(0, 0, 220, 297, style='F')
-    
+
     # Header bar - gradient blue
     pdf.set_fill_color(37, 99, 235)
     pdf.rect(0, 0, 220, 35, style='F')
@@ -646,19 +611,19 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.set_text_color(255, 255, 255)
     pdf.cell(0, 25, 'Urban Change Detection Report', ln=True, align='C')
     pdf.ln(5)
-    
+
     # Subtitle
     pdf.set_font('Helvetica', '', 11)
     pdf.set_text_color(71, 85, 105)
     pdf.cell(0, 10, 'Analysis Period: ' + y1_str + ' to ' + y2_str, ln=True, align='C')
     pdf.ln(8)
-    
+
     # Decorative line
     pdf.set_draw_color(37, 99, 235)
     pdf.set_line_width(0.5)
     pdf.line(20, pdf.get_y(), 190, pdf.get_y())
     pdf.ln(8)
-    
+
     # Metrics Section - BLACK TEXT
     pdf.set_font('Helvetica', 'B', 14)
     pdf.set_text_color(15, 23, 42)
@@ -671,13 +636,13 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.cell(0, 8, '   New Urban Expansion: +' + new_str + ' km2', ln=True)
     pdf.cell(0, 8, '   Urban Loss: -' + loss_str + ' km2', ln=True)
     pdf.ln(10)
-    
+
     # Decorative line
     pdf.set_draw_color(139, 92, 246)
     pdf.set_line_width(0.5)
     pdf.line(20, pdf.get_y(), 190, pdf.get_y())
     pdf.ln(8)
-    
+
     # Conclusion Section - BLACK TEXT
     pdf.set_font('Helvetica', 'B', 14)
     pdf.set_text_color(15, 23, 42)
@@ -690,12 +655,12 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.add_page()
     pdf.set_fill_color(255, 255, 255)
     pdf.rect(0, 0, 220, 297, style='F')
-    
+
     pdf.set_font('Helvetica', 'B', 18)
     pdf.set_text_color(37, 99, 235)
     pdf.cell(0, 15, 'Visual Analysis: Input & AI Detection', ln=True, align='C')
     pdf.ln(5)
-    
+
     pdf.set_font('Helvetica', 'B', 11)
     pdf.set_text_color(71, 85, 105)
     pdf.cell(95, 8, 'Original Satellite (' + y1_str + ')', ln=False, align='C')
@@ -703,7 +668,7 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.image('temp_orig1.png', x=10, w=90)
     pdf.image('temp_orig2.png', x=110, w=90)
     pdf.ln(5)
-    
+
     pdf.set_font('Helvetica', 'B', 11)
     pdf.cell(95, 8, 'AI Urban Mask (' + y1_str + ')', ln=False, align='C')
     pdf.cell(95, 8, 'AI Urban Mask (' + y2_str + ')', ln=True, align='C')
@@ -714,18 +679,18 @@ def generate_comprehensive_pdf(stats, change_map_img, orig1_pil, orig2_pil, mask
     pdf.add_page()
     pdf.set_fill_color(255, 255, 255)
     pdf.rect(0, 0, 220, 297, style='F')
-    
+
     pdf.set_font('Helvetica', 'B', 18)
     pdf.set_text_color(37, 99, 235)
     pdf.cell(0, 15, 'Change Detection Mapping', ln=True, align='C')
     pdf.ln(5)
-    
+
     pdf.set_font('Helvetica', '', 11)
     pdf.set_text_color(51, 65, 85)
     pdf.multi_cell(0, 6, 'The map illustrates spatial distribution of urban changes. Red = new expansion, Orange = urban loss, Dark red = stable urban, Light green = stable non-urban.')
     pdf.ln(5)
     pdf.image('temp_map.png', x=10, w=190)
-    
+
     pdf_output = pdf.output()
     return bytes(pdf_output) if not isinstance(pdf_output, bytes) else pdf_output
 
@@ -788,19 +753,19 @@ if analyze_btn:
             mask1 = predict(chw1)
             mask2 = predict(chw2)
             cm, u1, u2, new, loss, net, gr, yrs = calc_stats(mask1, mask2, year1, year2)
-            
+
             stats = {'y1': year1, 'y2': year2, 'u1': u1, 'u2': u2, 'new': new, 'loss': loss, 'net': net, 'gr': gr}
-            
+
             mask1_pil = Image.fromarray((mask1 * 255).astype(np.uint8))
             mask2_pil = Image.fromarray((mask2 * 255).astype(np.uint8))
             orig1_pil = Image.fromarray((disp1 * 255).astype(np.uint8))
             orig2_pil = Image.fromarray((disp2 * 255).astype(np.uint8))
-            
+
             # Results Section with animations
             st.markdown('<div class="section-header">📊 Analytics Dashboard</div>', unsafe_allow_html=True)
-            
+
             col1, col2, col3, col4 = st.columns(4)
-            
+
             with col1:
                 st.metric(f'Urban Area {year1}', f'{u1:.2f} km2', 'Baseline')
             with col2:
@@ -809,32 +774,32 @@ if analyze_btn:
                 st.metric('Net Change', f'{net:+.2f} km2', f'{gr:+.1f}%')
             with col4:
                 st.metric('Annual Growth', f'{gr/yrs:+.2f} %/yr', f'over {yrs} years')
-            
+
             st.markdown('<hr>', unsafe_allow_html=True)
             st.markdown('<div class="section-header">🗺 Visual Analysis</div>', unsafe_allow_html=True)
-            
+
             tab1, tab2, tab3 = st.tabs(['📸 Original Imagery', '🤖 AI Detection Masks', '🔄 Change Map'])
-            
+
             with tab1:
                 c1, c2 = st.columns(2)
                 with c1:
                     st.image(disp1, caption=f'T1 Satellite - {year1}', use_column_width=True)
                 with c2:
                     st.image(disp2, caption=f'T2 Satellite - {year2}', use_column_width=True)
-            
+
             with tab2:
                 c1, c2 = st.columns(2)
                 with c1:
                     st.image(mask1*255, caption=f'AI Urban Mask - {year1}', use_column_width=True, clamp=True)
                 with c2:
                     st.image(mask2*255, caption=f'AI Urban Mask - {year2}', use_column_width=True, clamp=True)
-            
+
             with tab3:
                 fig, ax = plt.subplots(figsize=(12, 7))
                 cmap = ListedColormap(['#90EE90', '#FF0000', '#FFA500', '#800000'])
                 ax.imshow(cm, cmap=cmap, vmin=0, vmax=3)
                 ax.axis('off')
-                
+
                 legend_elements = [
                     Patch(facecolor='#90EE90', label='Stable Non-Urban'),
                     Patch(facecolor='#800000', label='Stable Urban'),
@@ -842,35 +807,35 @@ if analyze_btn:
                     Patch(facecolor='#FFA500', label=f'Urban Loss (-{loss:.2f} km2)')
                 ]
                 leg = ax.legend(
-                    handles=legend_elements, 
-                    loc='lower center', 
-                    bbox_to_anchor=(0.5, -0.08), 
-                    ncol=4, 
+                    handles=legend_elements,
+                    loc='lower center',
+                    bbox_to_anchor=(0.5, -0.08),
+                    ncol=4,
                     frameon=True,
                     fontsize=10,
                     fancybox=True,
                     shadow=True
                 )
-                for text in leg.get_texts(): 
+                for text in leg.get_texts():
                     text.set_color('#E2E8F0')
                     text.set_fontweight('600')
                 leg.get_frame().set_facecolor('#0F172A')
                 leg.get_frame().set_edgecolor('#334155')
                 leg.get_frame().set_alpha(0.95)
-                
+
                 st.pyplot(fig)
-                
+
                 st.markdown('<hr>', unsafe_allow_html=True)
                 st.markdown('<div class="section-header">📄 Export Report</div>', unsafe_allow_html=True)
-                
+
                 fig.canvas.draw()
                 width, height = fig.canvas.get_width_height()
                 buf = np.frombuffer(fig.canvas.buffer_rgba(), dtype=np.uint8)
                 buf = buf.reshape(height, width, 4)
                 map_img = Image.fromarray(buf[:, :, :3], 'RGB')
-                
+
                 pdf_bytes = generate_comprehensive_pdf(stats, map_img, orig1_pil, orig2_pil, mask1_pil, mask2_pil)
-                
+
                 st.markdown('<div class="download-btn-wrapper">', unsafe_allow_html=True)
                 st.download_button(
                     label='⬇ Download Full PDF Report',
