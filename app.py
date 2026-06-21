@@ -420,30 +420,33 @@ st.markdown("""
         backdrop-filter: blur(10px);
     }
 
-    .stSpinner > div {
-        border-top-color: #3B82F6 !important;
-        border-right-color: #8B5CF6 !important;
-        border-bottom-color: transparent !important;
-        border-left-color: transparent !important;
-        animation: spin 1s linear infinite;
+    /* Spin animation lives ONLY on the svg icon — never on the spinner container or its text */
+    .stSpinner svg {
+        animation: spin 1s linear infinite !important;
+        transform-origin: 50% 50% !important;
     }
     @keyframes spin {
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
     }
 
-    /* Rotating analysis text animation (single definition — duplicates removed) */
+    /* Spinner text: explicitly forbid any rotation, pulse via opacity/scale only */
+    .stSpinner p,
+    .stSpinner div {
+        animation: none !important;
+        transform: none !important;
+    }
     .stSpinner p {
         font-size: 1.1rem !important;
         font-weight: 600 !important;
         color: #60A5FA !important;
-        animation: textPulse 1.5s ease-in-out infinite;
         text-align: center;
         margin-top: 1rem;
+        animation: textPulse 1.5s ease-in-out infinite !important;
     }
     @keyframes textPulse {
-        0%, 100% { opacity: 1; transform: scale(1); text-shadow: 0 0 10px rgba(96,165,250,0.5); }
-        50% { opacity: 0.6; transform: scale(0.95); text-shadow: 0 0 20px rgba(96,165,250,0.8); }
+        0%, 100% { opacity: 1; text-shadow: 0 0 10px rgba(96,165,250,0.5); }
+        50% { opacity: 0.55; text-shadow: 0 0 20px rgba(96,165,250,0.8); }
     }
 
     hr {
